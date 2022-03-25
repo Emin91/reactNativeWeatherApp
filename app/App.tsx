@@ -1,8 +1,8 @@
 import React, { FC } from 'react';
 import { SafeAreaView, StatusBar } from 'react-native';
-import { Provider } from 'react-redux';
 import { RootNavigation } from './modules/navigation/rootNavigation';
 import { store } from './modules/redux/store';
+import { Provider } from 'react-redux';
 
 const App: FC = () => {
 	return (

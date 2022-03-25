@@ -1,5 +1,5 @@
-import { IAppState } from "../modules/redux/appState/reducer";
+import { IWeather } from "../modules/redux/weather/reducer";
 
 export interface IRootState {
-    AppState: IAppState;
+    Weather: IWeather;
 };

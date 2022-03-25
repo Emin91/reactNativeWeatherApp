@@ -1,26 +1,34 @@
-import React, { FC, useEffect, useMemo, useState } from 'react';
-import { View, Text, Image, ScrollView } from 'react-native';
-import { useDispatch } from 'react-redux';
-import { ForecastItems } from '../../components/forecastItems';
-import { GradientText } from '../../components/gradientText';
-import { MainHeader } from '../../components/mainHeader';
+import React, { FC, memo, useEffect, useMemo, useState } from 'react';
+import { View, Text, Image, ScrollView, ActivityIndicator, Pressable } from 'react-native';
+import { selectForecastList, selectWeather } from '../../modules/redux/weather/selectors';
+import { shallowEqual, useDispatch, useSelector } from 'react-redux';
+import { IStackNavigation } from '../../interfaces/IStackNavigation';
 import { getWeather } from '../../modules/saga/launcher/actions';
+import { SharedElement } from 'react-navigation-shared-element';
+import { ForecastItems } from '../../components/forecastItems';
+import { IForecastItem } from '../../interfaces/IForecastItem';
+import { GradientText } from '../../components/gradientText';
+import { IWeatherItem } from '../../interfaces/IWeatherItem';
+import { MainHeader } from '../../components/mainHeader';
+import { weatherIcons } from './generateWeatherIcons';
 import { getStyle } from './styles';
 
+interface Props {
+    navigation: IStackNavigation;
+};
 
-export const MainScreen: FC = () => {
+export const MainScreen: FC<Props> = memo(({ navigation }) => {
     const styles = useMemo(() => getStyle(), []);
-    const temperature = 26;
-    const weatherState = 'Cloud';
     const dispatch = useDispatch();
-    const mainUrl = `https://api.openweathermap.org/data/2.5/onecall?lat=40.409264&lon=49.867092&exclude=hourly,current,minutely,alerts&appid=4486e591bd278be78e989429da35190c`
-    const weekDays: string[] = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-    var weeks: number[] = [0, 1, 2, 3, 4, 5, 6];
+    const weather: IWeatherItem = useSelector(selectWeather, shallowEqual);
+    const forecastList: Array<IForecastItem> = useSelector(selectForecastList, shallowEqual);
+    const [filteredForecastDays, setFilteredForecastDays] = useState<Array<any>>([{ date: '', days: '' }]);
     var currentDate = new Date().getDay();
-    const [theArray, setTheArray] = useState<Array<any>>([{ date: '', days: '' }]);
+    var weeks: number[] = [0, 1, 2, 3, 4, 5, 6];
     var loopWeek: any = weeks.splice(currentDate).concat(weeks) || [];
+    const weekDays: string[] = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
-    const createForecastDays = () => {
+    const createForecastDays = (): void => {
         var filteredDays: any = [];
         var filteredDate: any = [];
         var res: any = [];
@@ -30,33 +38,54 @@ export const MainScreen: FC = () => {
             d.setDate(d.getDate() + i);
             filteredDate.push(d.getDate());
             res.push({ date: filteredDate[i], days: filteredDays[i] });
-            setTheArray(res);
+            setFilteredForecastDays(res);
         };
     };
 
     useEffect(() => {
         createForecastDays();
+        dispatch(getWeather());
     }, []);
 
     return (
-        <View style={styles.container}>
-            <MainHeader />
-            <View style={styles.weatherIconWrapper}>
-                <Image resizeMode='contain' style={styles.weatherIcon} source={require('../../assets/images/cloudZap.png')} />
-            </View>
-            <GradientText style={styles.temperatureText}>{temperature}°</GradientText>
-            <Text numberOfLines={1} style={styles.weatherStateText}>{weatherState}</Text>
-            <Text style={styles.forecastText}>7-day forecast</Text>
-            <View style={{ paddingTop: 20 }}>
-                <ScrollView
-                    horizontal
-                    overScrollMode='never'
-                    showsHorizontalScrollIndicator={false}>
-                    {theArray?.map(({ date, days }, index) => (
-                        <ForecastItems key={index} {...{ date, days }} />
-                    ))}
-                </ScrollView>
-            </View>
+        <View style={[styles.container, Object.keys(weather).length === 0 && { justifyContent: 'center', alignItems: 'center' }]}>
+            {Object.keys(weather).length === 0
+                ? <ActivityIndicator size={'large'} />
+                : <View>
+                    <SharedElement id={`item.mainHeader`}>
+                        <MainHeader {...{ weather }} />
+                    </SharedElement>
+                    <View style={styles.weatherIconWrapper}>
+                        <SharedElement id={`item.mainIcon`}>
+                            <Image resizeMode='contain' style={styles.weatherIcon} source={weatherIcons[weather.weather[0].icon]} />
+                        </SharedElement>
+                    </View>
+                    <View style={styles.tempWrapper}>
+                        <SharedElement id={`item.temperatureText`}>
+                            <GradientText style={styles.temperatureText}>{Math.round(weather?.main?.temp)}°c</GradientText>
+                        </SharedElement>
+                        <Pressable onPress={() => navigation.navigate('DetailsScreen', { data: weather })} style={(({ pressed }) => [{ opacity: pressed ? 0.7 : 1 }])}>
+                            <Text style={styles.detailsText}>DETAILS</Text>
+                        </Pressable>
+                    </View>
+                    <SharedElement id={`item.weatherState`}>
+                        <Text numberOfLines={1} style={styles.weatherStateText}>{weather.weather[0].description}</Text>
+                    </SharedElement>
+                    <Text style={styles.forecastText}>7-day forecast</Text>
+                    <View style={{ paddingTop: 20 }}>
+                        {!forecastList.length
+                            ? <ActivityIndicator />
+                            : <ScrollView
+                                horizontal
+                                overScrollMode='never'
+                                showsHorizontalScrollIndicator={false}>
+                                {filteredForecastDays?.map(({ date, days }, index) => (
+                                    <ForecastItems key={index} {...{ date, days, forecastList, index }} />
+                                ))}
+                            </ScrollView>
+                        }
+                    </View>
+                </View>}
         </View>
     )
-};
+});

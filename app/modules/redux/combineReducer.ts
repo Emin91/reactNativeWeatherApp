@@ -1,9 +1,9 @@
 import { combineReducers } from 'redux';
 import { IRootState } from '../../interfaces/IRootState';
-import { AppState } from './appState/reducer';
+import { Weather } from './weather/reducer';
 
 const combineReducer = combineReducers<IRootState>({
-    AppState,
+    Weather,
 });
 
 export default combineReducer;
