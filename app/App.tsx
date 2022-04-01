@@ -7,7 +7,7 @@ import { Provider } from 'react-redux';
 const App: FC = () => {
 	return (
 		<SafeAreaView style={{ flex: 1 }}>
-			<StatusBar backgroundColor={'#111827'} barStyle={'light-content'} />
+			<StatusBar backgroundColor={'white'} barStyle={'dark-content'} />
 			<Provider store={store}>
 				<RootNavigation />
 			</Provider>

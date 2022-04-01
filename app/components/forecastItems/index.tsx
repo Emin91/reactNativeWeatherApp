@@ -1,7 +1,7 @@
 import React, { FC, useEffect, useMemo } from 'react';
 import { Text, Pressable, Image } from 'react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withDelay, withTiming } from 'react-native-reanimated';
-import { weatherIcons } from '../../screens/mainScreen/generateWeatherIcons';
+import { weatherIcons } from '../../screens/weatherMainScreen/generateWeatherIcons';
 import { IStackNavigation } from '../../interfaces/IStackNavigation';
 import { SharedElement } from 'react-navigation-shared-element';
 import { IForecastItem } from '../../interfaces/IForecastItem';
